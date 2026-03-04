@@ -2,83 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Live Sports Player · FootyFeed</title>
+  <title>Matches Links · FootyFeed Extension Mode</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <!-- HLS.js Library - This stops video freezing -->
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style type="text/css">
     body { margin: 0; padding: 0; background-color: #000; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; }
-    .video-container { position: relative; width: 100%; height: 100%; background-color: #000; }
-    video { width: 100%; height: 100%; background-color: #000; outline: none; }
+    #container { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; text-align: center; }
+    
+    /* Match Card */
+    .match-card { background: #111; border: 1px solid #333; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .match-card img { width: 100%; border-radius: 10px; margin-bottom: 20px; border: 1px solid #444; }
+    .title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #facc15; }
+    .tournament { font-size: 14px; color: #888; margin-bottom: 25px; }
 
-    /* Quality selector panel */
-    .quality-panel { position: absolute; top: 15px; right: 15px; z-index: 1000; display: flex; gap: 8px; flex-wrap: wrap; background: rgba(0, 0, 0, 0.6); padding: 8px 12px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); }
-    .quality-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.3s; }
-    .quality-btn.active { background: #ff0000; }
+    /* The Extension Play Button */
+    .play-btn { 
+      background: linear-gradient(to right, #e94560, #fb4360); 
+      color: white; padding: 15px 35px; border-radius: 50px; 
+      text-decoration: none; font-weight: bold; font-size: 18px;
+      display: inline-flex; align-items: center; gap: 10px;
+      transition: 0.3s;
+    }
+    .play-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4); }
 
-    /* Match info panel */
-    .match-info { position: absolute; bottom: 70px; left: 15px; z-index: 1000; background: rgba(0,0,0,0.6); padding: 12px 18px; border-radius: 8px; font-size: 14px; border-left: 4px solid #ff0000; max-width: 85%; pointer-events: none; }
-    .match-title { font-weight: bold; margin-bottom: 4px; font-size: 17px; }
-    .match-tournament { font-size: 12px; opacity: 0.8; }
-
-    /* Custom Loading Spinner */
-    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; display: none; }
-    .custom-loading.visible { display: block; }
-    .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: #ff0000; border-radius: 50%; animation: spin 1s linear infinite; }
+    /* Loading Overlay */
+    #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; display:flex; justify-content:center; align-items:center; z-index:9999; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #222; border-top-color: #e94560; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Telegram Modal */
-    .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; backdrop-filter: blur(8px); background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 10000; }
-    .modal-content { background: #111; border: 1px solid #333; border-radius: 24px; padding: 30px; width: 85%; max-width: 380px; text-align: center; color: #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-    #joinButton { width: 100%; padding: 14px; background: linear-gradient(to right, #3b82f6, #06b6d4); color: #fff; border: none; border-radius: 14px; margin-bottom: 12px; font-weight: bold; cursor: pointer; font-size: 16px; }
-    #closeButton { color: #888; border: none; background: none; cursor: pointer; text-decoration: underline; font-size: 14px; }
   </style>
 </head>
 <body>
 
-  <div class="video-container">
-    <video id="video" controls autoplay playsinline></video>
-    
-    <div id="qualityPanel" class="quality-panel"></div>
-    
-    <div id="matchInfo" class="match-info" style="display: none;">
-      <div id="matchTitle" class="match-title"></div>
-      <div id="matchTournament" class="match-tournament"></div>
-      <div id="matchStatus" style="color: #ffaa00; font-size: 12px; margin-top: 5px;">Status: LIVE</div>
-    </div>
+  <div id="loading"><div class="spinner"></div></div>
 
-    <div id="customLoading" class="custom-loading">
-      <div class="spinner"></div>
+  <div id="container">
+    <div class="match-card" id="match-card" style="display: none;">
+      <img id="match-img" src="" alt="Match Thumbnail">
+      <div id="match-title" class="title">Loading...</div>
+      <div id="match-tournament" class="tournament">Please wait...</div>
+      
+      <!-- এটিই সেই আসল Extension Trigger বাটন -->
+      <a id="ext-play-link" href="#" class="play-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+        PLAY IN EXTENSION
+      </a>
     </div>
-  </div>
-
-  <!-- Telegram Modal -->
-  <div id="telegramPopup" class="modal">
-    <div class="modal-content">
-      <h2 style="color: #facc15; margin-top: 0;">⚽ Join Telegram!</h2>
-      <p style="color: #ccc; font-size: 14px; line-height: 1.5;">ম্যাচ আটকে গেলে বা নতুন লিঙ্ক পেতে আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন।</p>
-      <button id="joinButton" onclick="window.open('https://t.me/FootyFeed', '_blank')">JOIN NOW</button>
-      <button id="closeButton" onclick="closePopup()">Continue Watching</button>
-    </div>
+    <div id="error-msg" style="color: #ff4444; display: none; font-size: 18px;">Match Not Found or Link Expired!</div>
   </div>
 
   <script>
     const apiURL = 'https://raw.githubusercontent.com/Jitendra-unatti/fancode/main/data/fancode.json';
+    const extensionID = 'akkncdpkjlfanomlnpmmolafofpnpjgn'; // আপনার দেওয়া সেই আইডি
+    
     const urlParams = new URLSearchParams(window.location.search);
     const matchId = urlParams.get('id');
 
-    const video = document.getElementById('video');
-    const loading = document.getElementById('customLoading');
-    let hls = new Hls();
-
-    async function init() {
+    async function setupLauncher() {
       if (!matchId) {
-        alert("Match ID is missing in URL!");
+        document.getElementById('loading').innerHTML = "No Match ID provided!";
         return;
       }
-
-      showSpinner(true);
 
       try {
         const response = await fetch(apiURL);
@@ -86,99 +69,46 @@
         const match = data.matches.find(m => m.match_id == matchId);
 
         if (!match) {
-          alert("Match Not Found!");
-          showSpinner(false);
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error-msg').style.display = 'block';
           return;
         }
 
-        // Update UI
-        document.getElementById('matchTitle').innerText = match.title;
-        document.getElementById('matchTournament').innerText = match.tournament;
-        document.getElementById('matchInfo').style.display = 'block';
+        // ম্যাচ তথ্য আপডেট
+        document.getElementById('match-title').innerText = match.title;
+        document.getElementById('match-tournament').innerText = match.tournament;
+        document.getElementById('match-img').src = match.image;
 
-        // Parse Qualities from auto_streams
-        let streams = [];
+        // auto_streams থেকে টোকেনসহ লিঙ্কটি বের করা
+        let finalM3u8 = "";
         if (match.auto_streams && match.auto_streams[0]) {
-          const autoText = match.auto_streams[0].auto;
-          const lines = autoText.split('\n');
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].includes('RESOLUTION=')) {
-              const label = lines[i].match(/RESOLUTION=(\d+x\d+)/)[1].split('x')[1] + 'p';
-              const url = lines[i+1].trim();
-              streams.push({ label, url });
-            }
-          }
+          const content = match.auto_streams[0].auto;
+          const links = content.match(/https:\/\/[^\s]+/g);
+          // ১০৮০পি লিঙ্কটি খুঁজি অথবা প্রথম লিঙ্কটি নেই
+          finalM3u8 = links.find(l => l.includes('1080p.m3u8')) || links[0];
+        } else {
+          finalM3u8 = match.STREAMING_CDN.Primary_Playback_URL;
         }
 
-        if (streams.length > 0) {
-          setupQualityPanel(streams);
-          // Play highest quality by default
-          play(streams[streams.length - 1].url, streams[streams.length - 1].label);
-        } else if (match.STREAMING_CDN.Primary_Playback_URL) {
-          play(match.STREAMING_CDN.Primary_Playback_URL, "Auto");
+        if (finalM3u8) {
+          // হুবহু সেই FootyFeed-এর মতো এক্সটেনশন পাথ তৈরি
+          const siteUrl = window.location.origin + window.location.pathname;
+          const extensionPath = `chrome-extension://${extensionID}/player/player.html?site=${encodeURIComponent(siteUrl)}#${finalM3u8}`;
+          
+          // বাটনে সেই জাদুকরী লিঙ্কটি সেট করা
+          document.getElementById('ext-play-link').href = extensionPath;
         }
 
-        // Show Telegram Modal after 10 seconds
-        setTimeout(() => { 
-          document.getElementById('telegramPopup').style.display = 'flex'; 
-        }, 10000);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('match-card').style.display = 'block';
 
-      } catch (err) {
-        console.error("API Error:", err);
-        showSpinner(false);
+      } catch (error) {
+        console.error(error);
+        document.getElementById('loading').innerHTML = "API Connection Failed!";
       }
     }
 
-    function setupQualityPanel(streams) {
-      const panel = document.getElementById('qualityPanel');
-      panel.innerHTML = '';
-      streams.forEach(s => {
-        const btn = document.createElement('button');
-        btn.className = 'quality-btn';
-        btn.innerText = s.label;
-        btn.onclick = () => play(s.url, s.label);
-        panel.appendChild(btn);
-      });
-    }
-
-    function play(url, label) {
-      showSpinner(true);
-      
-      // Active Button UI
-      document.querySelectorAll('.quality-btn').forEach(b => {
-        b.classList.toggle('active', b.innerText === label);
-      });
-
-      if (Hls.isSupported()) {
-        hls.destroy(); // Clear previous stream buffer
-        hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play();
-          showSpinner(false);
-        });
-      } 
-      // For Safari/iOS native support
-      else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-        video.addEventListener('loadedmetadata', () => {
-          video.play();
-          showSpinner(false);
-        });
-      }
-    }
-
-    function showSpinner(status) {
-      if (status) loading.classList.add('visible');
-      else loading.classList.remove('visible');
-    }
-
-    function closePopup() { 
-      document.getElementById('telegramPopup').style.display = 'none'; 
-    }
-
-    init();
+    setupLauncher();
   </script>
 </body>
 </html>
