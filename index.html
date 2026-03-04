@@ -2,54 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matches Links · FootyFeed Dynamic</title>
   <meta name="referrer" content="no-referrer">
-  <title>Live Player - Dynamic API</title>
-  <style>
-    body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: Arial, sans-serif; }
-    #player-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    
-    /* ভিডিও প্লেয়ার স্টাইল */
-    video { width: 100%; max-height: 80vh; background: #000; outline: none; }
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <style type="text/css">
+    body { margin: 0; padding: 0; background-color: #000000; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; }
+    .video-container { position: relative; width: 100%; height: 100%; background-color: #000; }
+    video { width: 100%; height: 100%; background-color: #000; }
+    video::-webkit-media-controls { display: flex !important; }
+    video::-webkit-media-controls-panel { display: flex !important; }
 
-    /* ম্যাচ ইনফো */
-    .info-box { width: 90%; max-width: 600px; margin-top: 20px; padding: 15px; background: #111; border-left: 4px solid #facc15; border-radius: 8px; }
-    .match-title { font-size: 20px; font-weight: bold; color: #facc15; }
-    .tournament { font-size: 14px; color: #888; margin-top: 5px; }
+    /* Quality selector panel */
+    .quality-panel { position: absolute; top: 10px; right: 70px; z-index: 1000; display: flex; gap: 5px; flex-wrap: wrap; background: rgba(0, 0, 0, 0.7); padding: 8px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); }
+    .quality-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s ease; min-width: 50px; text-align: center; }
+    .quality-btn.active { background: #ff0000; color: white; }
 
-    /* লোডিং এবং এরর */
-    #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #222; border-top-color: #facc15; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Match info panel */
+    .match-info { position: absolute; bottom: 60px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 10px 15px; border-radius: 5px; font-size: 14px; border-left: 3px solid #ff0000; max-width: 400px; }
+    .match-title { font-weight: bold; margin-bottom: 3px; font-size: 16px; }
+    .match-tournament { font-size: 12px; opacity: 0.8; }
+
+    /* Loading indicator */
+    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 16px; background: rgba(0,0,0,0.7); padding: 15px 25px; border-radius: 30px; z-index: 2000; display: none; }
+    .custom-loading.visible { display: block; }
+
+    /* Telegram Modal */
+    .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; backdrop-filter: blur(6px); background: rgb(0 0 0 / 0.4); display: none; justify-content: center; align-items: center; z-index: 10000; }
+    .modal-content { background: rgb(255 255 255 / 0.05); border: 1px solid rgb(255 255 255 / 0.1); border-radius: 20px; padding: 30px 25px; width: 90%; max-width: 400px; text-align: center; color: #f3f4f6; box-shadow: 0 8px 32px rgb(0 0 0 / 0.4); backdrop-filter: blur(12px); }
+    #joinButton { width: 100%; padding: 12px; background: linear-gradient(to right, #3b82f6, #06b6d4); color: #fff; border: none; border-radius: 12px; margin-bottom: 12px; cursor: pointer; }
+    #closeButton { width: 100%; padding: 12px; background: rgb(255 255 255 / 0.1); color: #f3f4f6; border: none; border-radius: 12px; cursor: pointer; }
+
+    /* m3u8 Sniffer Layer */
+    .overlayDiv { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 5000; border: 1px solid #444; color: #fff; display: none; }
+    .m3u8Link { color: #3b82f6; text-decoration: none; word-break: break-all; }
+    .olButton { background: #444; padding: 2px 8px; border-radius: 3px; cursor: pointer; margin-left: 5px; font-size: 11px; }
+    .olButton a { color: #fff; text-decoration: none; }
   </style>
 </head>
 <body>
 
-  <div id="loading"><div class="spinner"></div></div>
+  <div class="video-container">
+    <video id="video" controls autoplay playsinline src=""></video>
+    
+    <div id="qualityPanel" class="quality-panel"></div>
+    
+    <div id="matchInfo" class="match-info">
+      <div id="matchTitle" class="match-title">Loading Match...</div>
+      <div id="matchTournament" class="match-tournament">Please wait</div>
+      <div id="matchStatus" class="match-tournament" style="color: #ffaa00;">Status: Fetching...</div>
+    </div>
 
-  <div id="player-container">
-    <!-- সরাসরি ভিডিও ট্যাগ যা সব জায়গায় চলে -->
-    <video id="main-video" controls autoplay playsinline src=""></video>
+    <div id="customLoading" class="custom-loading">Loading stream...</div>
+  </div>
 
-    <div class="info-box" id="info-box" style="display: none;">
-      <div id="title" class="match-title">Loading Match...</div>
-      <div id="tournament" class="tournament">Tournament Info</div>
+  <!-- Telegram Modal -->
+  <div id="telegramPopup" class="modal">
+    <div class="modal-content">
+      <h2 style="color: #facc15;">⚽ Join Our Telegram!</h2>
+      <p>Get instant updates on all live matches by joining our Telegram channel <strong>@FootyFeed</strong></p>
+      <button id="joinButton" onclick="window.open('https://t.me/FootyFeed', '_blank')">Join Now</button>
+      <button id="closeButton" onclick="closePopup()">Continue Watching</button>
     </div>
   </div>
 
+  <!-- m3u8 Sniffer Layer (The Overlay) -->
+  <div id="m3u8Layer" class="overlayDiv">
+    <span>m3u8 Sniffer [1]</span>
+    <span style="margin-left: 10px;">
+      <a id="extPlayLink" href="#" class="m3u8Link">Play in Extension</a>
+    </span>
+    <span id="copyBtn" class="olButton">Copy</span>
+    <span class="olButton" onclick="this.parentElement.style.display='none'">X</span>
+  </div>
+
   <script>
-    // আপনার JSON API লিঙ্ক
     const apiURL = 'https://raw.githubusercontent.com/Jitendra-unatti/fancode/main/data/fancode.json';
-    
+    const extensionID = 'akkncdpkjlfanomlnpmmolafofpnpjgn';
     const urlParams = new URLSearchParams(window.location.search);
     const matchId = urlParams.get('id');
-    const videoElement = document.getElementById('main-video');
 
-    async function startPlayer() {
+    const video = document.getElementById('video');
+    const loading = document.getElementById('customLoading');
+
+    async function init() {
       if (!matchId) {
-        document.getElementById('loading').innerHTML = "No ID! Use ?id=140852";
+        alert("ID Missing!");
         return;
       }
+
+      loading.classList.add('visible');
 
       try {
         const response = await fetch(apiURL);
@@ -57,50 +98,89 @@
         const match = data.matches.find(m => m.match_id == matchId);
 
         if (!match) {
-          document.getElementById('loading').innerHTML = "Match Not Found!";
+          document.getElementById('matchTitle').innerText = "Match Not Found!";
+          loading.classList.remove('visible');
           return;
         }
 
-        // ম্যাচ ডিটেইলস সেট করা
-        document.getElementById('title').innerText = match.title;
-        document.getElementById('tournament').innerText = match.tournament;
-        document.getElementById('info-box').style.display = 'block';
+        // Update Match Info
+        document.getElementById('matchTitle').innerText = match.title;
+        document.getElementById('matchTournament').innerText = match.tournament;
+        document.getElementById('matchStatus').innerText = "Status: " + match.status;
 
-        // auto_streams থেকে টোকেনসহ আসল লিঙ্ক খুঁজে বের করা
-        let finalUrl = "";
-        if (match.auto_streams && match.auto_streams.length > 0) {
-          const autoContent = match.auto_streams[0].auto;
-          const links = autoContent.match(/https:\/\/[^\s]+/g);
-          
-          if (links && links.length > 0) {
-            // ১০৮০পি অথবা লাস্ট লিঙ্ক (বেস্ট কোয়ালিটি) নেওয়া হচ্ছে
-            finalUrl = links.find(l => l.includes('1080p.m3u8')) || links[links.length - 1];
+        // Parse auto_streams for Qualities
+        let streams = [];
+        if (match.auto_streams && match.auto_streams[0]) {
+          const autoText = match.auto_streams[0].auto;
+          const lines = autoText.split('\n');
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes('RESOLUTION=')) {
+              const label = lines[i].match(/RESOLUTION=(\d+x\d+)/)[1].split('x')[1] + 'p';
+              const url = lines[i+1].trim();
+              streams.push({ label, url });
+            }
           }
         }
 
-        // যদি auto_streams এ না থাকে, তবে CDN লিঙ্ক ব্যবহার করা
-        if (!finalUrl && match.STREAMING_CDN.Primary_Playback_URL) {
-          finalUrl = match.STREAMING_CDN.Primary_Playback_URL;
+        if (streams.length > 0) {
+          setupQualityPanel(streams);
+          play(streams[streams.length - 1].url, streams[streams.length - 1].label);
+        } else if (match.STREAMING_CDN.Primary_Playback_URL) {
+          play(match.STREAMING_CDN.Primary_Playback_URL, "Auto");
         }
 
-        if (finalUrl) {
-          // ভিডিও ট্যাগে লিঙ্কটি বসিয়ে দেওয়া
-          videoElement.src = finalUrl;
-          
-          // প্লে শুরু হলে লোডিং সরানো
-          videoElement.onloadedmetadata = () => {
-            document.getElementById('loading').style.display = 'none';
-          };
-        } else {
-          document.getElementById('loading').innerHTML = "Stream Link Not Available!";
-        }
+        // Show Telegram after 10s
+        setTimeout(() => { document.getElementById('telegramPopup').style.display = 'flex'; }, 10000);
 
-      } catch (error) {
-        document.getElementById('loading').innerHTML = "API Connection Error!";
+      } catch (err) {
+        console.error(err);
+        loading.classList.remove('visible');
       }
     }
 
-    startPlayer();
+    function setupQualityPanel(streams) {
+      const panel = document.getElementById('qualityPanel');
+      panel.innerHTML = '';
+      streams.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'quality-btn';
+        btn.innerText = s.label;
+        btn.onclick = () => play(s.url, s.label);
+        panel.appendChild(btn);
+      });
+    }
+
+    function play(url, label) {
+      loading.classList.add('visible');
+      
+      // Update Buttons
+      document.querySelectorAll('.quality-btn').forEach(b => {
+        b.classList.toggle('active', b.innerText === label);
+      });
+
+      // Update Native Video
+      video.src = url;
+      video.onloadeddata = () => loading.classList.remove('visible');
+
+      // Update Overlay & Extension Link (Logic you asked for)
+      const overlay = document.getElementById('m3u8Layer');
+      const extBtn = document.getElementById('extPlayLink');
+      const siteUrl = window.location.origin + window.location.pathname;
+      
+      const extensionPath = `chrome-extension://${extensionID}/player/player.html?site=${encodeURIComponent(siteUrl)}#${url}`;
+      extBtn.href = extensionPath;
+      overlay.style.display = 'inline-block';
+
+      // Copy Button
+      document.getElementById('copyBtn').onclick = () => {
+        navigator.clipboard.writeText(url);
+        alert("Link Copied!");
+      };
+    }
+
+    function closePopup() { document.getElementById('telegramPopup').style.display = 'none'; }
+
+    init();
   </script>
 </body>
 </html>
