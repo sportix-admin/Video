@@ -4,27 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <title>Extension Player - Auto Stream Extractor</title>
+  <title>Live Player - Dynamic API</title>
   <style>
-    body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: Arial, sans-serif; overflow: hidden; }
-    #container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; text-align: center; }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: Arial, sans-serif; }
+    #player-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     
-    .match-card { background: #111; border: 1px solid #333; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; }
-    .match-card img { width: 100%; border-radius: 10px; margin-bottom: 20px; border: 1px solid #444; }
-    .title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #facc15; }
-    .tournament { font-size: 14px; color: #888; margin-bottom: 25px; }
+    /* ভিডিও প্লেয়ার স্টাইল */
+    video { width: 100%; max-height: 80vh; background: #000; outline: none; }
 
-    .play-btn { 
-      background: linear-gradient(to right, #e94560, #fb4360); 
-      color: white; padding: 15px 35px; border-radius: 50px; 
-      text-decoration: none; font-weight: bold; font-size: 18px;
-      display: inline-flex; align-items: center; gap: 10px;
-      transition: 0.3s;
-    }
-    .play-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4); }
+    /* ম্যাচ ইনফো */
+    .info-box { width: 90%; max-width: 600px; margin-top: 20px; padding: 15px; background: #111; border-left: 4px solid #facc15; border-radius: 8px; }
+    .match-title { font-size: 20px; font-weight: bold; color: #facc15; }
+    .tournament { font-size: 14px; color: #888; margin-top: 5px; }
 
-    #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:#000; display:flex; justify-content:center; align-items:center; z-index:9999; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #222; border-top-color: #e94560; border-radius: 50%; animation: spin 1s linear infinite; }
+    /* লোডিং এবং এরর */
+    #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #222; border-top-color: #facc15; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
@@ -32,94 +27,80 @@
 
   <div id="loading"><div class="spinner"></div></div>
 
-  <div id="container">
-    <div class="match-card" id="match-card" style="display: none;">
-      <img id="match-img" src="" alt="Thumbnail">
-      <div id="match-title" class="title">Loading...</div>
-      <div id="match-tournament" class="tournament">Please wait...</div>
-      
-      <!-- Extension Link Button -->
-      <a id="ext-play-link" href="#" class="play-btn">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-        WATCH LIVE
-      </a>
+  <div id="player-container">
+    <!-- সরাসরি ভিডিও ট্যাগ যা সব জায়গায় চলে -->
+    <video id="main-video" controls autoplay playsinline src=""></video>
+
+    <div class="info-box" id="info-box" style="display: none;">
+      <div id="title" class="match-title">Loading Match...</div>
+      <div id="tournament" class="tournament">Tournament Info</div>
     </div>
-    <div id="error-msg" style="color: #ff4444; display: none; font-size: 20px;">Match Not Found or Not Live!</div>
   </div>
 
   <script>
-    // আপনার API এবং Extension ID
+    // আপনার JSON API লিঙ্ক
     const apiURL = 'https://raw.githubusercontent.com/Jitendra-unatti/fancode/main/data/fancode.json';
-    const extensionID = 'akkncdpkjlfanomlnpmmolafofpnpjgn';
     
     const urlParams = new URLSearchParams(window.location.search);
     const matchId = urlParams.get('id');
+    const videoElement = document.getElementById('main-video');
 
-    async function setupPlayer() {
+    async function startPlayer() {
       if (!matchId) {
-        document.getElementById('loading').innerHTML = "No Match ID in URL! Use ?id=140683";
+        document.getElementById('loading').innerHTML = "No ID! Use ?id=140852";
         return;
       }
 
       try {
         const response = await fetch(apiURL);
         const data = await response.json();
-        
-        // ১. ম্যাচ আইডি মিলিয়ে ম্যাচ খুঁজে বের করা
         const match = data.matches.find(m => m.match_id == matchId);
 
         if (!match) {
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('error-msg').style.display = 'block';
+          document.getElementById('loading').innerHTML = "Match Not Found!";
           return;
         }
 
-        // ২. UI আপডেট করা
-        document.getElementById('match-title').innerText = match.title;
-        document.getElementById('match-tournament').innerText = match.tournament;
-        document.getElementById('match-img').src = match.image;
+        // ম্যাচ ডিটেইলস সেট করা
+        document.getElementById('title').innerText = match.title;
+        document.getElementById('tournament').innerText = match.tournament;
+        document.getElementById('info-box').style.display = 'block';
 
-        // ৩. auto_streams থেকে টোকেনসহ লিঙ্ক বের করা (মেইন লজিক)
-        let finalVideoUrl = "";
-
+        // auto_streams থেকে টোকেনসহ আসল লিঙ্ক খুঁজে বের করা
+        let finalUrl = "";
         if (match.auto_streams && match.auto_streams.length > 0) {
-          const autoContent = match.auto_streams[0].auto; // এখানে সেই বিশাল টেক্সট
+          const autoContent = match.auto_streams[0].auto;
+          const links = autoContent.match(/https:\/\/[^\s]+/g);
           
-          // টেক্সট থেকে সব https লিঙ্কগুলো আলাদা করা
-          const allUrls = autoContent.match(/https:\/\/[^\s]+/g);
-          
-          if (allUrls && allUrls.length > 0) {
-            // অগ্রাধিকার: ১০৮০পি লিঙ্কটি খুঁজি, না পেলে লিস্টের শেষটি (সাধারণত হাই কোয়ালিটি হয়)
-            finalVideoUrl = allUrls.find(url => url.includes('1080p.m3u8')) || allUrls[allUrls.length - 1];
+          if (links && links.length > 0) {
+            // ১০৮০পি অথবা লাস্ট লিঙ্ক (বেস্ট কোয়ালিটি) নেওয়া হচ্ছে
+            finalUrl = links.find(l => l.includes('1080p.m3u8')) || links[links.length - 1];
           }
         }
 
-        // ৪. যদি auto_streams এ কিছু না থাকে, তবে CDN ব্যাকআপ লিঙ্ক ট্রাই করা
-        if (!finalVideoUrl && match.STREAMING_CDN.Primary_Playback_URL) {
-          finalVideoUrl = match.STREAMING_CDN.Primary_Playback_URL;
+        // যদি auto_streams এ না থাকে, তবে CDN লিঙ্ক ব্যবহার করা
+        if (!finalUrl && match.STREAMING_CDN.Primary_Playback_URL) {
+          finalUrl = match.STREAMING_CDN.Primary_Playback_URL;
         }
 
-        // ৫. এক্সটেনশন পাথ তৈরি করা
-        if (finalVideoUrl) {
-          const siteUrl = window.location.href;
-          const finalExtPath = `chrome-extension://${extensionID}/player/player.html?site=${encodeURIComponent(siteUrl)}#${finalVideoUrl}`;
+        if (finalUrl) {
+          // ভিডিও ট্যাগে লিঙ্কটি বসিয়ে দেওয়া
+          videoElement.src = finalUrl;
           
-          // বাটনে লিঙ্ক সেট করা
-          document.getElementById('ext-play-link').href = finalExtPath;
+          // প্লে শুরু হলে লোডিং সরানো
+          videoElement.onloadedmetadata = () => {
+            document.getElementById('loading').style.display = 'none';
+          };
         } else {
-          alert("No Stream URL Found in auto_streams!");
+          document.getElementById('loading').innerHTML = "Stream Link Not Available!";
         }
-
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('match-card').style.display = 'block';
 
       } catch (error) {
-        console.error("Fetch Error:", error);
-        document.getElementById('loading').innerHTML = "API Connection Failed!";
+        document.getElementById('loading').innerHTML = "API Connection Error!";
       }
     }
 
-    setupPlayer();
+    startPlayer();
   </script>
 </body>
 </html>
