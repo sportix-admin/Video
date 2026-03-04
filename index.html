@@ -1,60 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>Live Player · FootyFeed Stable</title>
+  <title>Matches Links · FootyFeed</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style type="text/css">
-    body { margin: 0; padding: 0; background-color: #000; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; }
+    body { margin: 0; padding: 0; background-color: #000000; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; }
     .video-container { position: relative; width: 100%; height: 100%; background-color: #000; }
-    video { width: 100%; height: 100%; background-color: #000; outline: none; }
+    video { width: 100%; height: 100%; background-color: #000; }
+    video::-webkit-media-controls { display: flex !important; }
+    video::-webkit-media-controls-panel { display: flex !important; }
+    
+    /* Quality selector panel */
+    .quality-panel { position: absolute; top: 10px; right: 70px; z-index: 1000; display: flex; gap: 5px; flex-wrap: wrap; background: rgba(0, 0, 0, 0.7); padding: 8px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); }
+    .quality-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s ease; min-width: 50px; text-align: center; }
+    .quality-btn:hover { background: rgba(255,255,255,0.3); }
+    .quality-btn.active { background: #ff0000; color: white; }
 
-    .quality-panel { position: absolute; top: 15px; right: 15px; z-index: 1000; display: flex; gap: 8px; flex-wrap: wrap; background: rgba(0, 0, 0, 0.6); padding: 8px 12px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); }
-    .quality-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.3s; }
-    .quality-btn.active { background: #ff0000; }
+    /* Match info panel */
+    .match-info { position: absolute; bottom: 60px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 10px 15px; border-radius: 5px; font-size: 14px; border-left: 3px solid #ff0000; max-width: 400px; }
+    .match-title { font-weight: bold; margin-bottom: 3px; font-size: 16px; }
+    .match-tournament { font-size: 12px; opacity: 0.8; }
 
-    .match-info { position: absolute; bottom: 70px; left: 15px; z-index: 1000; background: rgba(0,0,0,0.6); padding: 12px 18px; border-radius: 8px; font-size: 14px; border-left: 4px solid #ff0000; max-width: 85%; pointer-events: none; }
-    .match-title { font-weight: bold; margin-bottom: 4px; font-size: 17px; }
-
-    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; display: none; }
+    /* Loading indicator */
+    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 16px; background: rgba(0,0,0,0.7); padding: 15px 25px; border-radius: 30px; z-index: 2000; display: none; }
     .custom-loading.visible { display: block; }
-    .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: #ff0000; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* m3u8 Sniffer Layer (As you wanted to keep the style) */
-    .overlayDiv { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 5000; border: 1px solid #444; display: none; }
+    /* Modal / Popup */
+    .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; backdrop-filter: blur(6px); background: rgb(0 0 0 / 0.4); display: none; justify-content: center; align-items: center; z-index: 10000; }
+    .modal-content { background: rgb(255 255 255 / 0.05); border: 1px solid rgb(255 255 255 / 0.1); border-radius: 20px; padding: 30px 25px; width: 90%; max-width: 400px; text-align: center; color: #f3f4f6; backdrop-filter: blur(12px); }
+    #joinButton { width: 100%; padding: 12px; background: linear-gradient(to right, #3b82f6, #06b6d4); color: #fff; border: none; border-radius: 12px; margin-bottom: 12px; cursor: pointer; }
+    #closeButton { width: 100%; padding: 12px; background: rgb(255 255 255 / 0.1); color: #f3f4f6; border: none; border-radius: 12px; cursor: pointer; }
+
+    /* Overlay Sniffer Layer */
+    .overlayDiv { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 5000; border: 1px solid #444; color: #fff; }
     .m3u8Link { color: #3b82f6; text-decoration: none; }
-
-    .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; backdrop-filter: blur(8px); background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 10000; }
-    .modal-content { background: #111; border: 1px solid #333; border-radius: 24px; padding: 30px; width: 85%; max-width: 380px; text-align: center; }
+    .olButton { background: #444; padding: 2px 8px; border-radius: 3px; cursor: pointer; margin-left: 5px; font-size: 11px; }
   </style>
 </head>
 <body>
 
   <div class="video-container">
-    <video id="video" controls autoplay playsinline></video>
+    <!-- আপনার অরিজিনাল ভিডিও ট্যাগ -->
+    <video id="video" controls autoplay playsinline src=""></video>
+    
+    <!-- অটোমেটিক কোয়ালিটি বাটন এখানে আসবে -->
     <div id="qualityPanel" class="quality-panel"></div>
+    
     <div id="matchInfo" class="match-info" style="display: none;">
-      <div id="matchTitle" class="match-title"></div>
-      <div id="matchTournament" style="font-size: 12px; opacity: 0.8;"></div>
+      <div id="matchTitle" class="match-title">Loading...</div>
+      <div id="matchTournament" class="match-tournament">Please wait...</div>
+      <div id="matchStatus" class="match-tournament" style="color: #ffaa00;">Status: LIVE</div>
     </div>
-    <div id="customLoading" class="custom-loading"><div class="spinner"></div></div>
+
+    <div id="customLoading" class="custom-loading">Loading stream...</div>
   </div>
 
   <div id="telegramPopup" class="modal">
     <div class="modal-content">
-      <h2 style="color: #facc15; margin-top: 0;">⚽ Join Telegram!</h2>
-      <p style="color: #ccc; font-size: 14px;">সব লাইভ ম্যাচের আপডেট পেতে আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন।</p>
-      <button style="width: 100%; padding: 14px; background: linear-gradient(to right, #3b82f6, #06b6d4); color: #fff; border: none; border-radius: 14px; font-weight: bold; cursor: pointer;" onclick="window.open('https://t.me/FootyFeed', '_blank')">JOIN NOW</button>
-      <button style="margin-top:15px; background:none; border:none; color:#888; text-decoration:underline; cursor:pointer;" onclick="document.getElementById('telegramPopup').style.display='none'">Continue Watching</button>
+      <h2 style="color:#facc15">⚽ Join Our Telegram!</h2>
+      <p>Get instant updates by joining our Telegram channel <strong>@FootyFeed</strong></p>
+      <button id="joinButton" onclick="window.open('https://t.me/FootyFeed', '_blank')">Join Now</button>
+      <button id="closeButton" onclick="document.getElementById('telegramPopup').style.display='none'">Continue Watching</button>
     </div>
   </div>
 
-  <div id="m3u8Layer" class="overlayDiv">
-    <span id="extLinkText">Play in Extension</span>
-    <a id="extPlayLink" href="#" class="m3u8Link"> [Link]</a>
+  <!-- m3u8 Sniffer Layer -->
+  <div id="m3u8Layer" class="overlayDiv" style="display: none;">
+    <span>m3u8 Sniffer [1]</span>
+    <span style="margin-left:10px;">
+        <a id="m3u8PlayLink" href="#" class="m3u8Link">Play in Extension</a>
+    </span>
+    <span class="olButton" onclick="this.parentElement.style.display='none'">X</span>
   </div>
 
   <script>
@@ -62,21 +80,9 @@
     const extensionID = 'akkncdpkjlfanomlnpmmolafofpnpjgn';
     const urlParams = new URLSearchParams(window.location.search);
     const matchId = urlParams.get('id');
+
     const video = document.getElementById('video');
     const loading = document.getElementById('customLoading');
-    
-    // HLS Configuration for Low Latency and Fast Start
-    const hlsConfig = {
-      enableWorker: true,
-      lowLatencyMode: true,
-      backBufferLength: 90,
-      initialLiveManifestSize: 1,
-      manifestLoadingMaxRetry: 10,
-      levelLoadingMaxRetry: 10
-    };
-    
-    let hls = new Hls(hlsConfig);
-    let currentUrl = "";
 
     async function init() {
       if (!matchId) return;
@@ -92,10 +98,12 @@
           return;
         }
 
+        // ম্যাচ ইনফো আপডেট
         document.getElementById('matchTitle').innerText = match.title;
         document.getElementById('matchTournament').innerText = match.tournament;
         document.getElementById('matchInfo').style.display = 'block';
 
+        // auto_streams থেকে লিঙ্ক এবং কোয়ালিটি ফিল্টার করা
         let streams = [];
         if (match.auto_streams && match.auto_streams[0]) {
           const autoText = match.auto_streams[0].auto;
@@ -111,6 +119,7 @@
 
         if (streams.length > 0) {
           setupQualityPanel(streams);
+          // আপনার অরিজিনাল পদ্ধতিতে ভিডিও চালানো (বেস্ট কোয়ালিটি)
           playStream(streams[streams.length - 1].url, streams[streams.length - 1].label);
         } else if (match.STREAMING_CDN.Primary_Playback_URL) {
           playStream(match.STREAMING_CDN.Primary_Playback_URL, "Auto");
@@ -135,57 +144,23 @@
       });
     }
 
+    // আপনার অরিজিনাল ভিডিও প্লে লজিক (The exact logic you provided)
     function playStream(url, label) {
-      // If same URL is already playing, don't reload
-      if (currentUrl === url) return;
-      currentUrl = url;
-
       loading.classList.add('visible');
+      
+      // একটিভ বাটন স্টাইল
       document.querySelectorAll('.quality-btn').forEach(b => {
         b.classList.toggle('active', b.innerText === label);
       });
 
-      // Update Extension Link
+      // সরাসরি video.src ব্যবহার (আপনার দেওয়া Working Logic)
+      video.src = url;
+      video.onloadeddata = () => loading.classList.remove('visible');
+
+      // এক্সটেনশন লিঙ্ক আপডেট (ইস্ট্রো লজিক)
       const siteUrl = window.location.origin + window.location.pathname;
-      document.getElementById('extPlayLink').href = `chrome-extension://${extensionID}/player/player.html?site=${encodeURIComponent(siteUrl)}#${url}`;
+      document.getElementById('m3u8PlayLink').href = `chrome-extension://${extensionID}/player/player.html?site=${encodeURIComponent(siteUrl)}#${url}`;
       document.getElementById('m3u8Layer').style.display = 'inline-block';
-
-      if (Hls.isSupported()) {
-        hls.detachMedia();
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play().catch(() => {
-            // Handle browsers that block autoplay
-            video.muted = true;
-            video.play();
-          });
-          loading.classList.remove('visible');
-        });
-
-        // Error Handling to prevent infinite loading
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          if (data.fatal) {
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                hls.startLoad();
-                break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                hls.recoverMediaError();
-                break;
-              default:
-                hls.destroy();
-                break;
-            }
-          }
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-        video.addEventListener('loadedmetadata', () => {
-          video.play();
-          loading.classList.remove('visible');
-        });
-      }
     }
 
     init();
