@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Matches Links · FootyFeed Dynamic</title>
+  <title>Matches Links · FootyFeed Pro</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style type="text/css">
@@ -38,22 +38,22 @@
       display: flex !important;
     }
 
-    /* কোয়ালিটি বাটন প্যানেল */
-    .quality-panel {
+    /* টপ প্যানেল (কোয়ালিটি এবং ফুলস্ক্রিন বাটন) */
+    .controls-panel {
       position: absolute;
       top: 10px;
       right: 10px;
       z-index: 1000;
       display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 8px 12px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.2);
+      gap: 8px;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 6px 10px;
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
-    .quality-btn {
+    .quality-btn, .fs-btn {
       background: rgba(255,255,255,0.1);
       color: white;
       border: none;
@@ -61,40 +61,19 @@
       border-radius: 15px;
       cursor: pointer;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: bold;
       transition: all 0.2s ease;
-      min-width: 50px;
-      text-align: center;
     }
 
     .quality-btn.active {
       background: #ff0000;
-      color: white;
     }
 
-    /* ম্যাচের তথ্য */
-    .match-info {
-      position: absolute;
-      bottom: 60px;
-      left: 10px;
-      z-index: 1000;
-      background: rgba(0,0,0,0.7);
-      padding: 10px 15px;
-      border-radius: 5px;
-      font-size: 14px;
-      border-left: 3px solid #ff0000;
-      max-width: 400px;
-    }
-
-    .match-title {
-      font-weight: bold;
-      margin-bottom: 3px;
-      font-size: 16px;
-    }
-
-    .match-tournament {
-      font-size: 12px;
-      opacity: 0.8;
+    .fs-btn {
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* লোডিং ইনডিকেটর */
@@ -104,10 +83,6 @@
       left: 50%;
       transform: translate(-50%, -50%);
       color: white;
-      font-size: 16px;
-      background: rgba(0,0,0,0.7);
-      padding: 15px 25px;
-      border-radius: 30px;
       z-index: 2000;
       display: none;
     }
@@ -115,23 +90,37 @@
     .custom-loading.visible {
       display: block;
     }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255,255,255,0.1);
+      border-top-color: #ff0000;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
-  <div class="video-container">
-    <!-- সরাসরি ভিডিও ট্যাগ - একদম আপনার অরিজিনাল লজিক -->
+  <div class="video-container" id="mainFrame">
+    <!-- আপনার অরিজিনাল ভিডিও ইঞ্জিন -->
     <video id="video" controls autoplay playsinline src=""></video>
     
-    <div id="qualityPanel" class="quality-panel"></div>
-    
-    <div id="matchInfo" class="match-info" style="display: none;">
-      <div id="matchTitle" class="match-title">Loading...</div>
-      <div id="matchTournament" class="match-tournament">Please wait...</div>
-      <div id="matchStatus" class="match-tournament" style="color: #ffaa00;">Status: LIVE</div>
+    <div class="controls-panel">
+      <!-- কোয়ালিটি বাটনগুলো এখানে আসবে -->
+      <div id="qualityPanel" style="display: flex; gap: 5px;"></div>
+      
+      <!-- ফুল স্ক্রিন বাটন -->
+      <button class="fs-btn" id="fsBtn" title="Fullscreen">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+      </button>
     </div>
 
-    <div id="customLoading" class="custom-loading">Loading stream...</div>
+    <div id="customLoading" class="custom-loading">
+      <div class="spinner"></div>
+    </div>
   </div>
 
   <script>
@@ -141,10 +130,11 @@
 
     const video = document.getElementById('video');
     const loading = document.getElementById('customLoading');
+    const frame = document.getElementById('mainFrame');
 
     async function init() {
       if (!matchId) {
-        alert("ID Missing in URL!");
+        alert("URL-এ ID নেই!");
         return;
       }
       loading.classList.add('visible');
@@ -155,17 +145,11 @@
         const match = data.matches.find(m => m.match_id == matchId);
 
         if (!match) {
-          alert("Match Not Found!");
+          alert("ম্যাচ পাওয়া যায়নি!");
           loading.classList.remove('visible');
           return;
         }
 
-        // ম্যাচ ডাটা আপডেট
-        document.getElementById('matchTitle').innerText = match.title;
-        document.getElementById('matchTournament').innerText = match.tournament;
-        document.getElementById('matchInfo').style.display = 'block';
-
-        // auto_streams থেকে লিঙ্ক কালেকশন
         let streams = [];
         if (match.auto_streams && match.auto_streams[0]) {
           const autoText = match.auto_streams[0].auto;
@@ -181,7 +165,6 @@
 
         if (streams.length > 0) {
           setupQualityButtons(streams);
-          // আপনার অরিজিনাল ভিডিও চানোর লজিক (সরাসরি src সেট করা)
           playStream(streams[streams.length - 1].url, streams[streams.length - 1].label);
         } else if (match.STREAMING_CDN.Primary_Playback_URL) {
           playStream(match.STREAMING_CDN.Primary_Playback_URL, "Auto");
@@ -209,12 +192,10 @@
     function playStream(url, label) {
       loading.classList.add('visible');
       
-      // বাটন হাইলাইট
       document.querySelectorAll('.quality-btn').forEach(b => {
         b.classList.toggle('active', b.innerText === label);
       });
 
-      // সরাসরি video.src ব্যবহার
       const currentTime = video.currentTime;
       video.src = url;
       
@@ -224,6 +205,17 @@
         loading.classList.remove('visible');
       };
     }
+
+    // ফুলস্ক্রিন ফাংশন (সব ব্রাউজার সাপোর্ট করবে)
+    document.getElementById('fsBtn').onclick = () => {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (frame.requestFullscreen) frame.requestFullscreen();
+        else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      }
+    };
 
     init();
   </script>
