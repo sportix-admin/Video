@@ -2,125 +2,53 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Matches Links · FootyFeed Pro</title>
+  <title>FootyFeed · Fullscreen Fix</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style type="text/css">
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #000000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-    }
+    body { margin: 0; padding: 0; background-color: #000; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; }
+    .video-container { position: relative; width: 100%; height: 100%; background-color: #000; display: flex; justify-content: center; align-items: center; }
+    video { width: 100%; height: 100%; background-color: #000; }
 
-    .video-container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background-color: #000;
-    }
+    /* Native controls hidden logic (optional, keeping browser default) */
+    video::-webkit-media-controls { display: flex !important; }
 
-    video {
-      width: 100%;
-      height: 100%;
-      background-color: #000;
+    /* Top Controls Panel */
+    .top-panel { position: absolute; top: 15px; right: 15px; z-index: 99999; display: flex; gap: 8px; align-items: center; pointer-events: auto; }
+    
+    .quality-btn, .fs-btn { 
+      background: rgba(0, 0, 0, 0.6); 
+      color: white; border: 1px solid rgba(255,255,255,0.2); 
+      padding: 8px 14px; border-radius: 20px; cursor: pointer; 
+      font-size: 12px; font-weight: bold; transition: 0.2s; 
     }
+    .quality-btn.active { background: #ff0000; border-color: #ff0000; }
+    .fs-btn { background: rgba(255, 255, 255, 0.2); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; }
 
-    /* ব্রাউজারের অরিজিনাল কন্ট্রোল বার */
-    video::-webkit-media-controls {
-      display: flex !important;
-    }
-
-    /* টপ প্যানেল (কোয়ালিটি এবং ফুলস্ক্রিন বাটন) */
-    .controls-panel {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 6px 10px;
-      border-radius: 30px;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .quality-btn, .fs-btn {
-      background: rgba(255,255,255,0.1);
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 15px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: bold;
-      transition: all 0.2s ease;
-    }
-
-    .quality-btn.active {
-      background: #ff0000;
-    }
-
-    .fs-btn {
-      background: rgba(255, 255, 255, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* লোডিং ইনডিকেটর */
-    .custom-loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      z-index: 2000;
-      display: none;
-    }
-
-    .custom-loading.visible {
-      display: block;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255,255,255,0.1);
-      border-top-color: #ff0000;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
+    /* Loading Spinner */
+    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; display: none; }
+    .custom-loading.visible { display: block; }
+    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #ff0000; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
   <div class="video-container" id="mainFrame">
-    <!-- আপনার অরিজিনাল ভিডিও ইঞ্জিন -->
+    <!-- CORE LOGIC: NATIVE VIDEO SRC -->
     <video id="video" controls autoplay playsinline src=""></video>
     
-    <div class="controls-panel">
-      <!-- কোয়ালিটি বাটনগুলো এখানে আসবে -->
+    <div class="top-panel">
+      <!-- Quality Buttons will appear here -->
       <div id="qualityPanel" style="display: flex; gap: 5px;"></div>
       
-      <!-- ফুল স্ক্রিন বাটন -->
+      <!-- Fixed Fullscreen Button -->
       <button class="fs-btn" id="fsBtn" title="Fullscreen">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
       </button>
     </div>
 
-    <div id="customLoading" class="custom-loading">
-      <div class="spinner"></div>
-    </div>
+    <div id="customLoading" class="custom-loading"><div class="spinner"></div></div>
   </div>
 
   <script>
@@ -131,12 +59,10 @@
     const video = document.getElementById('video');
     const loading = document.getElementById('customLoading');
     const frame = document.getElementById('mainFrame');
+    const fsBtn = document.getElementById('fsBtn');
 
     async function init() {
-      if (!matchId) {
-        alert("URL-এ ID নেই!");
-        return;
-      }
+      if (!matchId) { alert("ID missing!"); return; }
       loading.classList.add('visible');
 
       try {
@@ -144,16 +70,11 @@
         const data = await response.json();
         const match = data.matches.find(m => m.match_id == matchId);
 
-        if (!match) {
-          alert("ম্যাচ পাওয়া যায়নি!");
-          loading.classList.remove('visible');
-          return;
-        }
+        if (!match) { alert("Match Not Found!"); return; }
 
         let streams = [];
         if (match.auto_streams && match.auto_streams[0]) {
-          const autoText = match.auto_streams[0].auto;
-          const lines = autoText.split('\n');
+          const lines = match.auto_streams[0].auto.split('\n');
           for (let i = 0; i < lines.length; i++) {
             if (lines[i].includes('RESOLUTION=')) {
               const label = lines[i].match(/RESOLUTION=(\d+x\d+)/)[1].split('x')[1] + 'p';
@@ -169,11 +90,7 @@
         } else if (match.STREAMING_CDN.Primary_Playback_URL) {
           playStream(match.STREAMING_CDN.Primary_Playback_URL, "Auto");
         }
-
-      } catch (err) {
-        console.error(err);
-        loading.classList.remove('visible');
-      }
+      } catch (err) { console.error(err); }
     }
 
     function setupQualityButtons(streams) {
@@ -188,17 +105,14 @@
       });
     }
 
-    // আপনার অরিজিনাল WORKING লজিক
     function playStream(url, label) {
       loading.classList.add('visible');
-      
       document.querySelectorAll('.quality-btn').forEach(b => {
         b.classList.toggle('active', b.innerText === label);
       });
 
       const currentTime = video.currentTime;
       video.src = url;
-      
       video.onloadedmetadata = () => {
         if (currentTime > 0) video.currentTime = currentTime;
         video.play();
@@ -206,16 +120,30 @@
       };
     }
 
-    // ফুলস্ক্রিন ফাংশন (সব ব্রাউজার সাপোর্ট করবে)
-    document.getElementById('fsBtn').onclick = () => {
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (frame.requestFullscreen) frame.requestFullscreen();
-        else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+    // FULLSCREEN FIX: Multi-Browser Support
+    fsBtn.addEventListener('click', function() {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+        if (frame.requestFullscreen) {
+          frame.requestFullscreen();
+        } else if (frame.webkitRequestFullscreen) {
+          frame.webkitRequestFullscreen();
+        } else if (frame.mozRequestFullScreen) {
+          frame.mozRequestFullScreen();
+        } else if (frame.msRequestFullscreen) {
+          frame.msRequestFullscreen();
+        }
       } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
       }
-    };
+    });
 
     init();
   </script>
