@@ -1,118 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>FootyFeed · Fullscreen Fix</title>
+  <title>Matches Links · FootyFeed Dynamic</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style type="text/css">
-    body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; font-family: Arial, sans-serif; }
-    
-    /* Main Container - Fullscreen Target */
-    .video-container { 
-      position: relative; 
-      width: 100%; 
-      height: 100%; 
-      background-color: #000; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
     }
 
-    video { 
-      width: 100%; 
-      height: 100%; 
-      background-color: #000; 
-      object-fit: contain;
-    }
-
-    /* Native controls visible */
-    video::-webkit-media-controls { display: flex !important; }
-
-    /* UI Layer */
-    .player-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
+    .video-container {
+      position: relative;
       width: 100%;
       height: 100%;
-      pointer-events: none;
-      z-index: 2147483647; /* Absolute top layer */
+      background-color: #000;
     }
 
-    .top-controls {
+    video {
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+    }
+
+    /* ব্রাউজারের অরিজিনাল কন্ট্রোল বার */
+    video::-webkit-media-controls {
+      display: flex !important;
+    }
+
+    /* কোয়ালিটি বাটন প্যানেল */
+    .quality-panel {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
       display: flex;
-      gap: 12px;
-      pointer-events: auto;
+      gap: 5px;
+      flex-wrap: wrap;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 8px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
     }
 
-    .icon-btn { 
-      background: rgba(0,0,0,0.5); 
-      border-radius: 50%; 
-      width: 44px; 
-      height: 44px; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      cursor: pointer; 
-      border: 1px solid rgba(255,255,255,0.3);
-      transition: 0.2s;
+    .quality-btn {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      min-width: 50px;
+      text-align: center;
     }
-    
-    .icon-btn svg { fill: white; width: 24px; height: 24px; }
-    .icon-btn:active { transform: scale(0.9); }
 
-    /* Quality Menu */
-    .quality-menu { 
-      position: absolute; 
-      top: 75px; 
-      right: 20px; 
-      pointer-events: auto;
-      background: rgba(10, 10, 10, 0.95); 
-      border-radius: 12px; 
-      border: 1px solid #444; 
-      display: none; 
-      flex-direction: column; 
-      min-width: 120px; 
-      overflow: hidden;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+    .quality-btn.active {
+      background: #ff0000;
+      color: white;
     }
-    .quality-menu.show { display: flex; }
-    
-    .q-item { padding: 12px; font-size: 14px; text-align: center; cursor: pointer; color: #eee; border-bottom: 1px solid #222; }
-    .q-item:hover, .q-item.active { background: #ff0000; color: #fff; }
 
-    /* Loader */
-    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; display: none; }
-    .custom-loading.visible { display: block; }
-    .spinner { width: 45px; height: 45px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #ff0000; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ম্যাচের তথ্য */
+    .match-info {
+      position: absolute;
+      bottom: 60px;
+      left: 10px;
+      z-index: 1000;
+      background: rgba(0,0,0,0.7);
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-size: 14px;
+      border-left: 3px solid #ff0000;
+      max-width: 400px;
+    }
+
+    .match-title {
+      font-weight: bold;
+      margin-bottom: 3px;
+      font-size: 16px;
+    }
+
+    .match-tournament {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    /* লোডিং ইনডিকেটর */
+    .custom-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 16px;
+      background: rgba(0,0,0,0.7);
+      padding: 15px 25px;
+      border-radius: 30px;
+      z-index: 2000;
+      display: none;
+    }
+
+    .custom-loading.visible {
+      display: block;
+    }
   </style>
 </head>
 <body>
 
-  <div class="video-container" id="mainFrame">
-    <!-- CORE LOGIC: NATIVE VIDEO SRC -->
+  <div class="video-container">
+    <!-- সরাসরি ভিডিও ট্যাগ - একদম আপনার অরিজিনাল লজিক -->
     <video id="video" controls autoplay playsinline src=""></video>
-
-    <div class="player-overlay">
-      <div class="top-controls">
-        <!-- New Fullscreen Button with better compatibility -->
-        <div class="icon-btn" id="fsBtn" title="Fullscreen">
-            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-        </div>
-        <!-- Gear Icon -->
-        <div class="icon-btn" id="gearIcon">
-          <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.85,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
-        </div>
-      </div>
-      <div class="quality-menu" id="qMenu"></div>
+    
+    <div id="qualityPanel" class="quality-panel"></div>
+    
+    <div id="matchInfo" class="match-info" style="display: none;">
+      <div id="matchTitle" class="match-title">Loading...</div>
+      <div id="matchTournament" class="match-tournament">Please wait...</div>
+      <div id="matchStatus" class="match-tournament" style="color: #ffaa00;">Status: LIVE</div>
     </div>
 
-    <div id="customLoading" class="custom-loading"><div class="spinner"></div></div>
+    <div id="customLoading" class="custom-loading">Loading stream...</div>
   </div>
 
   <script>
@@ -121,43 +140,13 @@
     const matchId = urlParams.get('id');
 
     const video = document.getElementById('video');
-    const frame = document.getElementById('mainFrame');
     const loading = document.getElementById('customLoading');
-    const qMenu = document.getElementById('qMenu');
-    const gearIcon = document.getElementById('gearIcon');
-    const fsBtn = document.getElementById('fsBtn');
-
-    // Quality Menu Toggle
-    gearIcon.onclick = (e) => { e.stopPropagation(); qMenu.classList.toggle('show'); };
-    document.onclick = () => qMenu.classList.remove('show');
-
-    // Advanced Fullscreen Logic (Works for Chrome, Safari, and Brave)
-    fsBtn.onclick = () => {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
-            if (frame.requestFullscreen) {
-                frame.requestFullscreen();
-            } else if (frame.webkitRequestFullscreen) {
-                frame.webkitRequestFullscreen();
-            } else if (frame.mozRequestFullScreen) {
-                frame.mozRequestFullScreen();
-            } else if (frame.msRequestFullscreen) {
-                frame.msRequestFullscreen();
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            }
-        }
-    };
 
     async function init() {
-      if (!matchId) return;
+      if (!matchId) {
+        alert("ID Missing in URL!");
+        return;
+      }
       loading.classList.add('visible');
 
       try {
@@ -165,11 +154,22 @@
         const data = await response.json();
         const match = data.matches.find(m => m.match_id == matchId);
 
-        if (!match) return;
+        if (!match) {
+          alert("Match Not Found!");
+          loading.classList.remove('visible');
+          return;
+        }
 
+        // ম্যাচ ডাটা আপডেট
+        document.getElementById('matchTitle').innerText = match.title;
+        document.getElementById('matchTournament').innerText = match.tournament;
+        document.getElementById('matchInfo').style.display = 'block';
+
+        // auto_streams থেকে লিঙ্ক কালেকশন
         let streams = [];
         if (match.auto_streams && match.auto_streams[0]) {
-          const lines = match.auto_streams[0].auto.split('\n');
+          const autoText = match.auto_streams[0].auto;
+          const lines = autoText.split('\n');
           for (let i = 0; i < lines.length; i++) {
             if (lines[i].includes('RESOLUTION=')) {
               const label = lines[i].match(/RESOLUTION=(\d+x\d+)/)[1].split('x')[1] + 'p';
@@ -180,37 +180,44 @@
         }
 
         if (streams.length > 0) {
-          setupQualityMenu(streams);
-          play(streams[streams.length - 1].url, streams[streams.length - 1].label);
+          setupQualityButtons(streams);
+          // আপনার অরিজিনাল ভিডিও চানোর লজিক (সরাসরি src সেট করা)
+          playStream(streams[streams.length - 1].url, streams[streams.length - 1].label);
         } else if (match.STREAMING_CDN.Primary_Playback_URL) {
-          play(match.STREAMING_CDN.Primary_Playback_URL, "Auto");
+          playStream(match.STREAMING_CDN.Primary_Playback_URL, "Auto");
         }
 
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error(err);
+        loading.classList.remove('visible');
+      }
     }
 
-    function setupQualityMenu(streams) {
-      qMenu.innerHTML = '';
+    function setupQualityButtons(streams) {
+      const panel = document.getElementById('qualityPanel');
+      panel.innerHTML = '';
       streams.forEach(s => {
-        const div = document.createElement('div');
-        div.className = 'q-item';
-        div.innerText = s.label;
-        div.onclick = () => play(s.url, s.label);
-        qMenu.appendChild(div);
+        const btn = document.createElement('button');
+        btn.className = 'quality-btn';
+        btn.innerText = s.label;
+        btn.onclick = () => playStream(s.url, s.label);
+        panel.appendChild(btn);
       });
     }
 
-    // ORIGINAL CORE LOGIC
-    function play(url, label) {
+    // আপনার অরিজিনাল WORKING লজিক
+    function playStream(url, label) {
       loading.classList.add('visible');
-      qMenu.classList.remove('show');
-
-      document.querySelectorAll('.q-item').forEach(el => {
-        el.classList.toggle('active', el.innerText === label);
+      
+      // বাটন হাইলাইট
+      document.querySelectorAll('.quality-btn').forEach(b => {
+        b.classList.toggle('active', b.innerText === label);
       });
 
+      // সরাসরি video.src ব্যবহার
       const currentTime = video.currentTime;
       video.src = url;
+      
       video.onloadedmetadata = () => {
         if (currentTime > 0) video.currentTime = currentTime;
         video.play();
