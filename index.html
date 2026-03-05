@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FootyFeed · Fullscreen Fixed</title>
+  <title>FootyFeed · Fullscreen Fix</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style type="text/css">
     body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; font-family: Arial, sans-serif; }
     
-    /* Main Frame */
+    /* Main Container - Fullscreen Target */
     .video-container { 
       position: relative; 
       width: 100%; 
@@ -23,12 +23,13 @@
       width: 100%; 
       height: 100%; 
       background-color: #000; 
+      object-fit: contain;
     }
 
     /* Native controls visible */
     video::-webkit-media-controls { display: flex !important; }
 
-    /* UI Layer inside Frame */
+    /* UI Layer */
     .player-overlay {
       position: absolute;
       top: 0;
@@ -36,75 +37,70 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 2147483647; /* Highest possible z-index for fullscreen */
+      z-index: 2147483647; /* Absolute top layer */
     }
 
-    /* Gear and FS Buttons */
     .top-controls {
       position: absolute;
       top: 20px;
       right: 20px;
       display: flex;
-      gap: 10px;
+      gap: 12px;
       pointer-events: auto;
     }
 
     .icon-btn { 
       background: rgba(0,0,0,0.5); 
       border-radius: 50%; 
-      width: 42px; 
-      height: 42px; 
+      width: 44px; 
+      height: 44px; 
       display: flex; 
       justify-content: center; 
       align-items: center; 
       cursor: pointer; 
-      border: 1px solid rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      transition: 0.2s;
     }
     
-    .icon-btn svg { fill: white; width: 22px; height: 22px; }
+    .icon-btn svg { fill: white; width: 24px; height: 24px; }
+    .icon-btn:active { transform: scale(0.9); }
 
     /* Quality Menu */
     .quality-menu { 
       position: absolute; 
-      top: 70px; 
+      top: 75px; 
       right: 20px; 
       pointer-events: auto;
-      background: rgba(15, 15, 15, 0.95); 
-      border-radius: 10px; 
+      background: rgba(10, 10, 10, 0.95); 
+      border-radius: 12px; 
       border: 1px solid #444; 
       display: none; 
       flex-direction: column; 
-      min-width: 110px; 
+      min-width: 120px; 
       overflow: hidden;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.8);
     }
     .quality-menu.show { display: flex; }
     
-    .q-item { 
-      padding: 12px; 
-      font-size: 14px; 
-      text-align: center; 
-      cursor: pointer; 
-      color: #ddd; 
-      border-bottom: 1px solid #333; 
-    }
+    .q-item { padding: 12px; font-size: 14px; text-align: center; cursor: pointer; color: #eee; border-bottom: 1px solid #222; }
     .q-item:hover, .q-item.active { background: #ff0000; color: #fff; }
 
-    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; display: none; }
+    /* Loader */
+    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; display: none; }
     .custom-loading.visible { display: block; }
-    .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: #ff0000; border-radius: 50%; animation: spin 1s linear infinite; }
+    .spinner { width: 45px; height: 45px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #ff0000; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
   <div class="video-container" id="mainFrame">
-    <!-- YOUR CORE LOGIC VIDEO TAG -->
+    <!-- CORE LOGIC: NATIVE VIDEO SRC -->
     <video id="video" controls autoplay playsinline src=""></video>
 
-    <!-- UI OVERLAY -->
     <div class="player-overlay">
       <div class="top-controls">
-        <!-- Fullscreen Button to keep UI visible -->
+        <!-- New Fullscreen Button with better compatibility -->
         <div class="icon-btn" id="fsBtn" title="Fullscreen">
             <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
         </div>
@@ -131,16 +127,32 @@
     const gearIcon = document.getElementById('gearIcon');
     const fsBtn = document.getElementById('fsBtn');
 
-    // Toggle Quality Menu
+    // Quality Menu Toggle
     gearIcon.onclick = (e) => { e.stopPropagation(); qMenu.classList.toggle('show'); };
     document.onclick = () => qMenu.classList.remove('show');
 
-    // Fullscreen Fix Logic
+    // Advanced Fullscreen Logic (Works for Chrome, Safari, and Brave)
     fsBtn.onclick = () => {
-        if (!document.fullscreenElement) {
-            frame.requestFullscreen().catch(err => alert("Error enabling fullscreen"));
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+            if (frame.requestFullscreen) {
+                frame.requestFullscreen();
+            } else if (frame.webkitRequestFullscreen) {
+                frame.webkitRequestFullscreen();
+            } else if (frame.mozRequestFullScreen) {
+                frame.mozRequestFullScreen();
+            } else if (frame.msRequestFullscreen) {
+                frame.msRequestFullscreen();
+            }
         } else {
-            document.exitFullscreen();
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
         }
     };
 
@@ -188,7 +200,7 @@
       });
     }
 
-    // YOUR CORE LOGIC REMAINS UNTOUCHED
+    // ORIGINAL CORE LOGIC
     function play(url, label) {
       loading.classList.add('visible');
       qMenu.classList.remove('show');
