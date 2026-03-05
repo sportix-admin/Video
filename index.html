@@ -2,53 +2,132 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>FootyFeed · Fullscreen Fix</title>
+  <title>FootyFeed · All-in-Frame Player</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style type="text/css">
-    body { margin: 0; padding: 0; background-color: #000; color: #fff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; }
-    .video-container { position: relative; width: 100%; height: 100%; background-color: #000; display: flex; justify-content: center; align-items: center; }
-    video { width: 100%; height: 100%; background-color: #000; }
+    /* ফুল স্ক্রিন লেআউট */
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: Arial, sans-serif; }
 
-    /* Native controls hidden logic (optional, keeping browser default) */
+    /* মেইন ভিডিও ফ্রেম (সবকিছু এর ভেতরে থাকবে) */
+    .video-container { 
+      position: relative; 
+      width: 100%; 
+      height: 100%; 
+      background-color: #000; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      overflow: hidden;
+    }
+
+    video { 
+      width: 100%; 
+      height: 100%; 
+      background-color: #000; 
+      z-index: 1;
+    }
+
+    /* ব্রাউজার কন্ট্রোলস দৃশ্যমান রাখা */
     video::-webkit-media-controls { display: flex !important; }
 
-    /* Top Controls Panel */
-    .top-panel { position: absolute; top: 15px; right: 15px; z-index: 99999; display: flex; gap: 8px; align-items: center; pointer-events: auto; }
-    
-    .quality-btn, .fs-btn { 
+    /* কোয়ালিটি প্যানেল - ভিডিওর ওপর ডানদিকে */
+    .quality-panel { 
+      position: absolute; 
+      top: 20px; 
+      right: 20px; 
+      z-index: 100; 
+      display: flex; 
+      gap: 6px; 
+      flex-wrap: wrap; 
+      justify-content: flex-end;
+      max-width: 200px;
+    }
+
+    .quality-btn { 
       background: rgba(0, 0, 0, 0.6); 
-      color: white; border: 1px solid rgba(255,255,255,0.2); 
-      padding: 8px 14px; border-radius: 20px; cursor: pointer; 
-      font-size: 12px; font-weight: bold; transition: 0.2s; 
+      color: white; 
+      border: 1px solid rgba(255,255,255,0.3); 
+      padding: 6px 12px; 
+      border-radius: 20px; 
+      cursor: pointer; 
+      font-size: 11px; 
+      font-weight: bold; 
+      transition: 0.3s;
     }
     .quality-btn.active { background: #ff0000; border-color: #ff0000; }
-    .fs-btn { background: rgba(255, 255, 255, 0.2); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; }
 
-    /* Loading Spinner */
-    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; display: none; }
+    /* লোডিং স্পিনার - ভিডিওর ঠিক মাঝখানে */
+    .custom-loading { 
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%); 
+      z-index: 110; 
+      display: none; 
+    }
     .custom-loading.visible { display: block; }
-    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #ff0000; border-radius: 50%; animation: spin 1s linear infinite; }
+    .spinner { 
+      width: 45px; height: 45px; 
+      border: 4px solid rgba(255,255,255,0.1); 
+      border-top-color: #ff0000; 
+      border-radius: 50%; 
+      animation: spin 1s linear infinite; 
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* টেলিগ্রাম পপ-আপ - ভিডিওর ওপর মাঝখানে */
+    .modal { 
+      position: absolute; 
+      top: 0; left: 0; 
+      width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.7); 
+      backdrop-filter: blur(5px); 
+      display: none; 
+      justify-content: center; 
+      align-items: center; 
+      z-index: 200; 
+    }
+    .modal-content { 
+      background: #111; 
+      border: 1px solid #333; 
+      border-radius: 15px; 
+      padding: 20px; 
+      width: 80%; 
+      max-width: 300px; 
+      text-align: center; 
+    }
+    .join-btn { 
+      width: 100%; padding: 12px; 
+      background: linear-gradient(to right, #3b82f6, #06b6d4); 
+      color: #fff; border: none; border-radius: 10px; 
+      font-weight: bold; cursor: pointer; margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
 
-  <div class="video-container" id="mainFrame">
-    <!-- CORE LOGIC: NATIVE VIDEO SRC -->
+  <div class="video-container" id="playerFrame">
+    <!-- আপনার অরিজিনাল ভিডিও ইঞ্জিন -->
     <video id="video" controls autoplay playsinline src=""></video>
     
-    <div class="top-panel">
-      <!-- Quality Buttons will appear here -->
-      <div id="qualityPanel" style="display: flex; gap: 5px;"></div>
-      
-      <!-- Fixed Fullscreen Button -->
-      <button class="fs-btn" id="fsBtn" title="Fullscreen">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-      </button>
+    <!-- কোয়ালিটি বাটন প্যানেল (ভিডিওর ওপর) -->
+    <div id="qualityPanel" class="quality-panel"></div>
+
+    <!-- লোডার (ভিডিওর ওপর) -->
+    <div id="customLoading" class="custom-loading">
+      <div class="spinner"></div>
     </div>
 
-    <div id="customLoading" class="custom-loading"><div class="spinner"></div></div>
+    <!-- টেলিগ্রাম পপ-আপ (ভিডিওর ওপর) -->
+    <div id="telegramPopup" class="modal">
+      <div class="modal-content">
+        <h3 style="color:#facc15; margin-top:0;">⚽ Join Telegram!</h3>
+        <p style="font-size:13px; color:#ccc;">সব ম্যাচের লাইভ আপডেট পেতে আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন।</p>
+        <button class="join-btn" onclick="window.open('https://t.me/FootyFeed', '_blank')">JOIN NOW</button>
+        <button style="background:none; border:none; color:#888; text-decoration:underline; cursor:pointer; font-size:12px;" onclick="closePopup()">Continue Watching</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -58,11 +137,12 @@
 
     const video = document.getElementById('video');
     const loading = document.getElementById('customLoading');
-    const frame = document.getElementById('mainFrame');
-    const fsBtn = document.getElementById('fsBtn');
 
     async function init() {
-      if (!matchId) { alert("ID missing!"); return; }
+      if (!matchId) {
+        alert("URL-এ ID নেই! যেমন: ?id=140852");
+        return;
+      }
       loading.classList.add('visible');
 
       try {
@@ -70,11 +150,15 @@
         const data = await response.json();
         const match = data.matches.find(m => m.match_id == matchId);
 
-        if (!match) { alert("Match Not Found!"); return; }
+        if (!match) {
+          alert("Match Not Found!");
+          return;
+        }
 
         let streams = [];
         if (match.auto_streams && match.auto_streams[0]) {
-          const lines = match.auto_streams[0].auto.split('\n');
+          const autoText = match.auto_streams[0].auto;
+          const lines = autoText.split('\n');
           for (let i = 0; i < lines.length; i++) {
             if (lines[i].includes('RESOLUTION=')) {
               const label = lines[i].match(/RESOLUTION=(\d+x\d+)/)[1].split('x')[1] + 'p';
@@ -86,11 +170,20 @@
 
         if (streams.length > 0) {
           setupQualityButtons(streams);
+          // আপনার অরিজিনাল লজিক দিয়ে ভিডিও চালানো
           playStream(streams[streams.length - 1].url, streams[streams.length - 1].label);
         } else if (match.STREAMING_CDN.Primary_Playback_URL) {
           playStream(match.STREAMING_CDN.Primary_Playback_URL, "Auto");
         }
-      } catch (err) { console.error(err); }
+
+        // ১০ সেকেন্ড পর পপ-আপ (ভিডিও ফ্রেমের ভেতরে আসবে)
+        setTimeout(() => { 
+          document.getElementById('telegramPopup').style.display = 'flex'; 
+        }, 10000);
+
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     function setupQualityButtons(streams) {
@@ -105,14 +198,17 @@
       });
     }
 
+    // আপনার আসল WORKING লজিক
     function playStream(url, label) {
       loading.classList.add('visible');
+      
       document.querySelectorAll('.quality-btn').forEach(b => {
         b.classList.toggle('active', b.innerText === label);
       });
 
       const currentTime = video.currentTime;
       video.src = url;
+      
       video.onloadedmetadata = () => {
         if (currentTime > 0) video.currentTime = currentTime;
         video.play();
@@ -120,30 +216,9 @@
       };
     }
 
-    // FULLSCREEN FIX: Multi-Browser Support
-    fsBtn.addEventListener('click', function() {
-      if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
-        if (frame.requestFullscreen) {
-          frame.requestFullscreen();
-        } else if (frame.webkitRequestFullscreen) {
-          frame.webkitRequestFullscreen();
-        } else if (frame.mozRequestFullScreen) {
-          frame.mozRequestFullScreen();
-        } else if (frame.msRequestFullscreen) {
-          frame.msRequestFullscreen();
-        }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-          document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
-        }
-      }
-    });
+    function closePopup() { 
+      document.getElementById('telegramPopup').style.display = 'none'; 
+    }
 
     init();
   </script>
