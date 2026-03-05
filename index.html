@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FootyFeed · Pro Universal Player</title>
+  <title>FootyFeed · Pro Player</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style type="text/css">
+    /* বেস লেআউট এবং সেন্টারিং */
     body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; font-family: sans-serif; }
     
-    /* Perfect Centering */
     .video-container { 
       position: relative; 
       width: 100%; 
@@ -16,10 +16,9 @@
       display: flex; 
       justify-content: center; 
       align-items: center; 
-      background-color: #000;
     }
 
-    /* Video Wrapper for In-Frame UI */
+    /* ভিডিও ফ্রেম - বাটনগুলো এর ভেতরেই থাকবে */
     .video-wrapper { 
       position: relative; 
       display: flex;
@@ -39,7 +38,7 @@
 
     video::-webkit-media-controls { display: flex !important; }
 
-    /* Clean Gear Button */
+    /* ক্লিন গিয়ার বাটন */
     .gear-btn { 
       position: absolute; 
       top: 15px; 
@@ -58,20 +57,19 @@
       transition: 0.3s;
     }
     .gear-btn svg { fill: #fff; width: 22px; height: 22px; }
-    .gear-btn:hover { background: rgba(255,255,255,0.2); transform: rotate(45deg); }
 
-    /* Professional Quality Menu */
+    /* কোয়ালিটি মেনু (ডিজাইন ঠিক রাখার জন্য) */
     .quality-menu { 
       position: absolute; 
       top: 60px; 
       right: 15px; 
       z-index: 101; 
       background: rgba(15, 15, 15, 0.95); 
-      border-radius: 12px; 
+      border-radius: 10px; 
       border: 1px solid #333; 
       display: none; 
       flex-direction: column; 
-      min-width: 110px; 
+      min-width: 100px; 
       overflow: hidden; 
       box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
@@ -81,15 +79,12 @@
       padding: 12px; 
       font-size: 13px; 
       text-align: center; 
-      cursor: pointer; 
       color: #eee; 
-      border-bottom: 1px solid #222; 
-      transition: 0.2s;
+      cursor: pointer;
     }
-    .q-item:hover { background: #333; }
     .q-item.active { background: #fff; color: #000; font-weight: bold; }
 
-    /* Clean White Loader */
+    /* ক্লিন সাদা লোডার */
     .custom-loading { 
       position: absolute; 
       top: 50%; 
@@ -109,6 +104,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* স্নাইফার ইনভিজিবল */
     #m3u8Layer { display: none !important; }
   </style>
 </head>
@@ -117,16 +113,22 @@
   <div class="video-container">
     <div class="video-wrapper">
       
-      <!-- Video Element with Preload for Smooth Start -->
-      <video id="video" controls autoplay playsinline preload="auto" src=""></video>
+      <!-- সরাসরি ভিডিও ট্যাগ - ১০০% ওয়ার্কিং কোর লজিক -->
+      <video id="video" controls autoplay playsinline src=""></video>
 
-      <!-- UI Elements -->
+      <!-- গিয়ার বাটন UI -->
       <div class="gear-btn" id="gearIcon">
         <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.85,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
       </div>
-      <div class="quality-menu" id="qMenu"></div>
+      
+      <div class="quality-menu" id="qMenu">
+        <div class="q-item active">Auto / Original</div>
+      </div>
 
-      <div id="customLoading" class="custom-loading"><div class="spinner"></div></div>
+      <!-- সাদা স্পিনার লোডার -->
+      <div id="customLoading" class="custom-loading">
+        <div class="spinner"></div>
+      </div>
 
     </div>
   </div>
@@ -134,93 +136,50 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const streamUrl = urlParams.get('play');
-    // Using a reliable CORS proxy to parse the m3u8 file content
-    const proxy = "https://api.allorigins.win/raw?url=";
 
     const video = document.getElementById('video');
     const loading = document.getElementById('customLoading');
     const qMenu = document.getElementById('qMenu');
     const gearIcon = document.getElementById('gearIcon');
 
-    gearIcon.onclick = (e) => { e.stopPropagation(); qMenu.classList.toggle('show'); };
+    // Gear Icon Toggle
+    gearIcon.onclick = (e) => {
+        e.stopPropagation();
+        qMenu.classList.toggle('show');
+    };
     document.onclick = () => qMenu.classList.remove('show');
 
-    async function init() {
+    function initPlayer() {
       if (!streamUrl) {
-        document.body.innerHTML = "<h2 style='color:white;text-align:center;margin-top:20%;'>No Stream Link Found!</h2>";
+        document.body.innerHTML = "<h2 style='color:white;text-align:center;margin-top:20%;'>No Stream URL provided.</h2>";
         return;
       }
       
       loading.classList.add('visible');
 
-      try {
-        // Fetch playlist text using proxy to bypass CORS for button generation
-        const response = await fetch(proxy + encodeURIComponent(streamUrl));
-        const m3u8Text = await response.text();
+      // সরাসরি আপনার অরিজিনাল WORKING লজিক ব্যবহার করা হচ্ছে
+      video.src = streamUrl;
 
-        const lines = m3u8Text.split('\n');
-        let streams = [];
-        
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].includes('RESOLUTION=')) {
-            const resMatch = lines[i].match(/RESOLUTION=(\d+x\d+)/);
-            const resLabel = resMatch ? resMatch[1].split('x')[1] + 'p' : 'Auto';
-            const url = lines[i + 1].trim();
-            if(url.startsWith('http')) {
-                streams.push({ label: resLabel, url: url });
-            }
-          }
-        }
+      // ভিডিও প্লে হওয়া শুরু হলে লোডার বন্ধ হবে
+      video.onplaying = () => {
+        loading.classList.remove('visible');
+      };
 
-        if (streams.length > 0) {
-          setupQualityMenu(streams);
-          // Auto play the best quality (usually last in playlist)
-          playStream(streams[streams.length - 1].url, streams[streams.length - 1].label);
-        } else {
-          playStream(streamUrl, "Auto");
-        }
-      } catch (err) {
-        playStream(streamUrl, "Auto");
-      }
-    }
+      // যদি ভিডিও বাফার করে তখন লোডার দেখাবে
+      video.onwaiting = () => {
+        loading.classList.add('visible');
+      };
 
-    function setupQualityMenu(streams) {
-      qMenu.innerHTML = '';
-      streams.forEach(s => {
-        const div = document.createElement('div');
-        div.className = 'q-item';
-        div.innerText = s.label;
-        div.onclick = () => playStream(s.url, s.label);
-        qMenu.appendChild(div);
-      });
-    }
-
-    // ORIGINAL CORE LOGIC (Pure video.src)
-    function playStream(url, label) {
-      loading.classList.add('visible');
-      qMenu.classList.remove('show');
-
-      document.querySelectorAll('.q-item').forEach(el => {
-        el.classList.toggle('active', el.innerText === label);
-      });
-
-      const currentTime = video.currentTime;
-      video.src = url;
-      
-      // Professional event handling for smooth transition
-      video.onplaying = () => loading.classList.remove('visible');
-      
       video.onloadedmetadata = () => {
-        if (currentTime > 0) video.currentTime = currentTime;
-        video.play().catch(() => {
-          // Fallback if autoplay is blocked
-          video.muted = true;
-          video.play();
+        video.play().catch(e => {
+            // যদি ব্রাউজার অটো-প্লে ব্লক করে
+            video.muted = true;
+            video.play();
         });
       };
     }
 
-    init();
+    initPlayer();
   </script>
 </body>
 </html>
