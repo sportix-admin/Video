@@ -2,128 +2,80 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>FootyFeed · In-Frame Player</title>
+  <title>FootyFeed · Pro In-Frame Player</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style type="text/css">
     body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; font-family: Arial, sans-serif; }
     
-    /* মেইন কন্টেইনার */
-    .video-container { 
-      position: relative; 
-      width: 100%; 
-      height: 100%; 
-      background-color: #000; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-    }
+    .video-container { position: relative; width: 100%; height: 100%; background-color: #000; display: flex; justify-content: center; align-items: center; }
 
-    /* ভিডিও র‍্যাপার - এটিই ভিডিওর আসল সীমানা বা ফ্রেম */
-    .video-wrapper {
-      position: relative;
-      display: inline-block;
-      max-width: 100%;
-      max-height: 100%;
-    }
+    /* ভিডিও ফ্রেম - সবকিছু এর ভেতরে থাকবে */
+    .video-wrapper { position: relative; display: inline-block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; }
 
-    video { 
-      display: block;
-      width: 100%; 
-      height: auto; 
-      max-height: 100vh;
-      background-color: #000; 
-    }
-
-    /* ব্রাউজারের নেটিভ কন্ট্রোলস সচল রাখা */
+    video { display: block; width: 100%; height: 100%; background-color: #000; }
     video::-webkit-media-controls { display: flex !important; }
 
-    /* গিয়ার বাটন - ঠিক ভিডিওর ওপর ডানদিকে */
+    /* গিয়ার বাটন */
     .gear-btn { 
-      position: absolute; 
-      top: 15px; 
-      right: 15px; 
-      z-index: 100; 
-      background: rgba(0,0,0,0.5); 
-      border-radius: 50%; 
-      width: 40px; 
-      height: 40px; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      cursor: pointer; 
-      border: 1px solid rgba(255,255,255,0.2);
+      position: absolute; top: 15px; right: 15px; z-index: 100; 
+      background: rgba(0,0,0,0.5); border-radius: 50%; 
+      width: 40px; height: 40px; display: flex; 
+      justify-content: center; align-items: center; 
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.2);
     }
-    .gear-btn svg { fill: white; width: 22px; height: 22px; }
+    .gear-btn svg { fill: white; width: 22px; height: 22px; transition: transform 0.3s; }
+    .gear-btn:hover svg { transform: rotate(45deg); }
 
-    /* কোয়ালিটি মেনু - ফ্রেমের ভেতরে */
+    /* কোয়ালিটি মেনু */
     .quality-menu { 
-      position: absolute; 
-      top: 60px; 
-      right: 15px; 
-      z-index: 101; 
-      background: rgba(10, 10, 10, 0.9); 
-      border-radius: 10px; 
-      border: 1px solid #444; 
-      display: none; 
-      flex-direction: column; 
-      min-width: 100px; 
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      position: absolute; top: 60px; right: 15px; z-index: 101; 
+      background: rgba(10, 10, 10, 0.9); border-radius: 10px; 
+      border: 1px solid #444; display: none; 
+      flex-direction: column; min-width: 100px; 
+      overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
     .quality-menu.show { display: flex; }
     
-    .q-item { 
-      padding: 10px; 
-      font-size: 13px; 
-      text-align: center; 
-      cursor: pointer; 
-      color: #eee; 
-      border-bottom: 1px solid #222; 
-    }
+    .q-item { padding: 10px; font-size: 13px; text-align: center; cursor: pointer; color: #eee; border-bottom: 1px solid #222; }
     .q-item:hover, .q-item.active { background: #ff0000; color: #fff; }
 
     /* লোডার */
-    .custom-loading { 
-      position: absolute; 
-      top: 50%; 
-      left: 50%; 
-      transform: translate(-50%, -50%); 
-      z-index: 110; 
-      display: none; 
-    }
+    .custom-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 110; display: none; }
     .custom-loading.visible { display: block; }
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #ff0000; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Hidden Extension Overlay */
+    #m3u8Layer { display: none !important; }
   </style>
 </head>
 <body>
 
   <div class="video-container">
-    <!-- এই Wrapper নিশ্চিত করবে বাটনগুলো ভিডিওর ভেতরে থাকবে -->
-    <div class="video-wrapper" id="playerFrame">
+    <div class="video-wrapper">
       
-      <!-- আপনার অরিজিনাল ভিডিও ইঞ্জিন -->
+      <!-- CORE LOGIC: NATIVE VIDEO SRC -->
       <video id="video" controls autoplay playsinline src=""></video>
 
-      <!-- গিয়ার বাটন লেয়ার -->
+      <!-- Gear Icon inside Frame -->
       <div class="gear-btn" id="gearIcon">
         <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.85,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
       </div>
-      
-      <!-- কোয়ালিটি মেনু -->
       <div class="quality-menu" id="qMenu"></div>
 
-      <!-- লোডার -->
-      <div id="customLoading" class="custom-loading">
-        <div class="spinner"></div>
-      </div>
+      <!-- Spinner inside Frame -->
+      <div id="customLoading" class="custom-loading"><div class="spinner"></div></div>
 
     </div>
   </div>
 
+  <div id="m3u8Layer"><a id="m3u8PlayLink" href="#"></a></div>
+
   <script>
-    const apiURL = 'https://raw.githubusercontent.com/Jitendra-unatti/fancode/main/data/fancode.json';
+    // আপনার নতুন ডাইরেক্ট লিঙ্ক টেমপ্লেট
+    const mainUrlTemplate = 'https://fc-ind-ivan-flux.sptv5204.workers.dev/{ID}-ENGLISH.m3u8';
+    const extensionID = 'akkncdpkjlfanomlnpmmolafofpnpjgn';
     const urlParams = new URLSearchParams(window.location.search);
     const matchId = urlParams.get('id');
 
@@ -132,45 +84,46 @@
     const qMenu = document.getElementById('qMenu');
     const gearIcon = document.getElementById('gearIcon');
 
-    // Gear Menu Toggle
-    gearIcon.onclick = (e) => {
-        e.stopPropagation();
-        qMenu.classList.toggle('show');
-    };
+    gearIcon.onclick = (e) => { e.stopPropagation(); qMenu.classList.toggle('show'); };
     document.onclick = () => qMenu.classList.remove('show');
 
     async function init() {
-      if (!matchId) { alert("ID missing!"); return; }
+      if (!matchId) { alert("ID missing in URL!"); return; }
       loading.classList.add('visible');
 
+      const masterUrl = mainUrlTemplate.replace('{ID}', matchId);
+
       try {
-        const response = await fetch(apiURL);
-        const data = await response.json();
-        const match = data.matches.find(m => m.match_id == matchId);
+        // আপনার দেওয়া লিঙ্ক থেকে মাস্টার প্লেলিস্ট ফেচ করা
+        const response = await fetch(masterUrl);
+        const m3u8Text = await response.text();
 
-        if (!match) { alert("Match not found!"); return; }
-
+        // প্লেলিস্ট থেকে কোয়ালিটি এবং লিঙ্ক আলাদা করা (Parsing)
+        const lines = m3u8Text.split('\n');
         let streams = [];
-        if (match.auto_streams && match.auto_streams[0]) {
-          const autoText = match.auto_streams[0].auto;
-          const lines = autoText.split('\n');
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].includes('RESOLUTION=')) {
-              const label = lines[i].match(/RESOLUTION=(\d+x\d+)/)[1].split('x')[1] + 'p';
-              const url = lines[i+1].trim();
-              streams.push({ label, url });
-            }
+        
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].includes('RESOLUTION=')) {
+            const resLabel = lines[i].match(/RESOLUTION=(\d+x\d+)/)[1].split('x')[1] + 'p';
+            const streamUrl = lines[i + 1].trim();
+            streams.push({ label: resLabel, url: streamUrl });
           }
         }
 
         if (streams.length > 0) {
           setupQualityMenu(streams);
+          // ডিফল্ট হিসেবে সর্বোচ্চ কোয়ালিটি চালানো
           playStream(streams[streams.length - 1].url, streams[streams.length - 1].label);
-        } else if (match.STREAMING_CDN.Primary_Playback_URL) {
-          playStream(match.STREAMING_CDN.Primary_Playback_URL, "Auto");
+        } else {
+          // যদি পার্সিং এ সমস্যা হয়, তবে সরাসরি মাস্টার লিঙ্ক চালানো
+          playStream(masterUrl, "Auto");
         }
 
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error("Fetch Error:", err);
+        // এরর হলে সরাসরি ওই আইডি দিয়ে তৈরি লিঙ্ক চালানোর চেষ্টা
+        playStream(masterUrl, "Auto");
+      }
     }
 
     function setupQualityMenu(streams) {
@@ -184,7 +137,7 @@
       });
     }
 
-    // আপনার সেই WORKING ভিডিও প্লেব্যাক লজিক
+    // আপনার সেই WORKING ভিডিও প্লেব্যাক লজিক (Pure video.src)
     function playStream(url, label) {
       loading.classList.add('visible');
       qMenu.classList.remove('show');
@@ -201,6 +154,10 @@
         video.play();
         loading.classList.remove('visible');
       };
+
+      // Background Extension Link
+      const siteUrl = window.location.origin + window.location.pathname;
+      document.getElementById('m3u8PlayLink').href = `chrome-extension://${extensionID}/player/player.html?site=${encodeURIComponent(siteUrl)}#${url}`;
     }
 
     init();
