@@ -1,50 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FootyFeed · In-Frame Universal Player</title>
+  <title>FootyFeed · Pro Universal Player</title>
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style type="text/css">
-    body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; font-family: Arial, sans-serif; }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; overflow: hidden; font-family: sans-serif; }
     
-    /* মেইন কন্টেইনার */
+    /* Perfect Centering */
     .video-container { 
       position: relative; 
       width: 100%; 
       height: 100%; 
-      background-color: #000; 
       display: flex; 
       justify-content: center; 
       align-items: center; 
+      background-color: #000;
     }
 
-    /* ভিডিও র‍্যাপার - ডিজাইন অনুযায়ী বাটনগুলো ফ্রেমের ভেতরে রাখবে */
-    .video-wrapper {
-      position: relative;
-      display: inline-block;
-      max-width: 100%;
-      max-height: 100%;
+    /* Video Wrapper for In-Frame UI */
+    .video-wrapper { 
+      position: relative; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
     }
 
     video { 
-      display: block;
       width: 100%; 
       height: auto; 
       max-height: 100vh;
       background-color: #000; 
+      outline: none;
     }
 
-    /* ব্রাউজারের নেটিভ কন্ট্রোলস */
     video::-webkit-media-controls { display: flex !important; }
 
-    /* গিয়ার বাটন - আপনার দেওয়া ডিজাইন */
+    /* Clean Gear Button */
     .gear-btn { 
       position: absolute; 
       top: 15px; 
       right: 15px; 
       z-index: 100; 
-      background: rgba(0,0,0,0.5); 
+      background: rgba(255,255,255,0.1); 
+      backdrop-filter: blur(10px);
       border-radius: 50%; 
       width: 40px; 
       height: 40px; 
@@ -53,37 +55,41 @@
       align-items: center; 
       cursor: pointer; 
       border: 1px solid rgba(255,255,255,0.2);
+      transition: 0.3s;
     }
-    .gear-btn svg { fill: white; width: 22px; height: 22px; }
+    .gear-btn svg { fill: #fff; width: 22px; height: 22px; }
+    .gear-btn:hover { background: rgba(255,255,255,0.2); transform: rotate(45deg); }
 
-    /* কোয়ালিটি মেনু - ফ্রেমের ভেতরে আপনার ডিজাইন */
+    /* Professional Quality Menu */
     .quality-menu { 
       position: absolute; 
       top: 60px; 
       right: 15px; 
       z-index: 101; 
-      background: rgba(10, 10, 10, 0.9); 
-      border-radius: 10px; 
-      border: 1px solid #444; 
+      background: rgba(15, 15, 15, 0.95); 
+      border-radius: 12px; 
+      border: 1px solid #333; 
       display: none; 
       flex-direction: column; 
-      min-width: 100px; 
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      min-width: 110px; 
+      overflow: hidden; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
     .quality-menu.show { display: flex; }
     
     .q-item { 
-      padding: 10px; 
+      padding: 12px; 
       font-size: 13px; 
       text-align: center; 
       cursor: pointer; 
       color: #eee; 
       border-bottom: 1px solid #222; 
+      transition: 0.2s;
     }
-    .q-item:hover, .q-item.active { background: #ff0000; color: #fff; }
+    .q-item:hover { background: #333; }
+    .q-item.active { background: #fff; color: #000; font-weight: bold; }
 
-    /* লোডার - আপনার ডিজাইন */
+    /* Clean White Loader */
     .custom-loading { 
       position: absolute; 
       top: 50%; 
@@ -93,8 +99,17 @@
       display: none; 
     }
     .custom-loading.visible { display: block; }
-    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #ff0000; border-radius: 50%; animation: spin 1s linear infinite; }
+    .spinner { 
+      width: 40px; 
+      height: 40px; 
+      border: 3px solid rgba(255,255,255,0.1); 
+      border-top-color: #ffffff; 
+      border-radius: 50%; 
+      animation: spin 0.8s linear infinite; 
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    #m3u8Layer { display: none !important; }
   </style>
 </head>
 <body>
@@ -102,55 +117,47 @@
   <div class="video-container">
     <div class="video-wrapper">
       
-      <!-- আপনার অরিজিনাল ভিডিও ইঞ্জিন (CORE LOGIC) -->
-      <video id="video" controls autoplay playsinline src=""></video>
+      <!-- Video Element with Preload for Smooth Start -->
+      <video id="video" controls autoplay playsinline preload="auto" src=""></video>
 
-      <!-- গিয়ার বাটন লেয়ার -->
+      <!-- UI Elements -->
       <div class="gear-btn" id="gearIcon">
         <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.85,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
       </div>
-      
-      <!-- কোয়ালিটি মেনু -->
       <div class="quality-menu" id="qMenu"></div>
 
-      <!-- লোডার -->
-      <div id="customLoading" class="custom-loading">
-        <div class="spinner"></div>
-      </div>
+      <div id="customLoading" class="custom-loading"><div class="spinner"></div></div>
 
     </div>
   </div>
 
   <script>
-    // আপনার নতুন ডায়নামিক লজিক (play প্যারামিটার থেকে লিঙ্ক নেওয়া)
     const urlParams = new URLSearchParams(window.location.search);
     const streamUrl = urlParams.get('play');
+    // Using a reliable CORS proxy to parse the m3u8 file content
+    const proxy = "https://api.allorigins.win/raw?url=";
 
     const video = document.getElementById('video');
     const loading = document.getElementById('customLoading');
     const qMenu = document.getElementById('qMenu');
     const gearIcon = document.getElementById('gearIcon');
 
-    // Gear Menu Toggle
-    gearIcon.onclick = (e) => {
-        e.stopPropagation();
-        qMenu.classList.toggle('show');
-    };
+    gearIcon.onclick = (e) => { e.stopPropagation(); qMenu.classList.toggle('show'); };
     document.onclick = () => qMenu.classList.remove('show');
 
     async function init() {
       if (!streamUrl) {
-        document.body.innerHTML = "<h2 style='color:white;text-align:center;margin-top:20%;'>?play=লিঙ্ক প্রদান করুন</h2>";
+        document.body.innerHTML = "<h2 style='color:white;text-align:center;margin-top:20%;'>No Stream Link Found!</h2>";
         return;
       }
+      
       loading.classList.add('visible');
 
       try {
-        // দেওয়া লিঙ্কটি রিড করা
-        const response = await fetch(streamUrl);
+        // Fetch playlist text using proxy to bypass CORS for button generation
+        const response = await fetch(proxy + encodeURIComponent(streamUrl));
         const m3u8Text = await response.text();
 
-        // প্লেলিস্ট থেকে কোয়ালিটি এবং লিঙ্ক আলাদা করা (Parsing)
         const lines = m3u8Text.split('\n');
         let streams = [];
         
@@ -167,15 +174,12 @@
 
         if (streams.length > 0) {
           setupQualityMenu(streams);
-          // ডিফল্ট হিসেবে সর্বোচ্চ কোয়ালিটি চালানো
+          // Auto play the best quality (usually last in playlist)
           playStream(streams[streams.length - 1].url, streams[streams.length - 1].label);
         } else {
-          // পার্সিং না হলে সরাসরি মেইন লিঙ্ক প্লে করা
           playStream(streamUrl, "Auto");
         }
-
       } catch (err) {
-        console.error("Fetch Error:", err);
         playStream(streamUrl, "Auto");
       }
     }
@@ -191,7 +195,7 @@
       });
     }
 
-    // আপনার সেই WORKING ভিডিও প্লেব্যাক লজিক (Pure video.src)
+    // ORIGINAL CORE LOGIC (Pure video.src)
     function playStream(url, label) {
       loading.classList.add('visible');
       qMenu.classList.remove('show');
@@ -203,10 +207,16 @@
       const currentTime = video.currentTime;
       video.src = url;
       
+      // Professional event handling for smooth transition
+      video.onplaying = () => loading.classList.remove('visible');
+      
       video.onloadedmetadata = () => {
         if (currentTime > 0) video.currentTime = currentTime;
-        video.play();
-        loading.classList.remove('visible');
+        video.play().catch(() => {
+          // Fallback if autoplay is blocked
+          video.muted = true;
+          video.play();
+        });
       };
     }
 
